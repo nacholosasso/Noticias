@@ -94,7 +94,16 @@ while True:
 
                 if link_actual != ultimos_links[diario]:
                     ultimos_links[diario] = link_actual
-                    print(f"🔍 Nueva noticia en {diario}: {entrada.title[:50]}...")
+                    
+                    # NUEVO: Chequeo preventivo en el Excel antes de gastar IA
+                    links_en_sheet = hoja_nube.col_values(7)
+                    if link_actual in links_en_sheet:
+                        print(f"✅ {diario}: La noticia ya está en el Excel. Saltando IA...")
+                        continue # Salta a la siguiente noticia sin llamar a Gemini
+
+                    # Si llegó acá, es porque REALMENTE es nueva
+                    print(f"🔍 Procesando nueva noticia en {diario}...")
+                    
                     
                     # FECHAS CORREGIDAS
                     fecha_rss_raw = entrada.get('published', '')
