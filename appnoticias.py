@@ -92,13 +92,13 @@ def extraer_cuerpo_noticia(url):
 # ==========================================
 ultimos_links = {nombre: "" for nombre in FUENTES}
 
-print(f"🚀 Vigilante Nube activado. Conectando a Google Sheets...")
+print(f"🚀 Noticias Nube activado. Conectando a Google Sheets...")
 hoja_nube = conectar_google_sheets()
 
 if hoja_nube:
     print(f"✅ Conexión exitosa a la planilla: {NOMBRE_PLANILLA}")
 else:
-    print("❌ No se pudo iniciar el vigilante sin conexión a la planilla.")
+    print("❌ No se pudo iniciar noticias sin conexión a la planilla.")
     exit()
 
 while True:
