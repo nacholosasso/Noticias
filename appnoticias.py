@@ -9,16 +9,18 @@ import gspread
 from bs4 import BeautifulSoup
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
 # ==========================================
 # CONFIGURACIÓN
 # ==========================================
+load_dotenv()  # <--- AGREGÁ ESTA LÍNEA AQUÍ
 API_KEYS = {
-    "Olé": "AIzaSyDCvBWEP_i-EQ8ESF83avnBMtz7DwArKzM",
-    "Clarín": "AIzaSyDZU-bJrXUr1h78Mv-mJTEERHEOt7EIH28",
-    "iProfesional": "AIzaSyBlP6Cz0ePoVnTkOWXrciAWNtuGzXfX5Wc",
-    "Caras": "AIzaSyC9bAsr4NAPgaloaK5LuLGEeniF-5zFtVE",
-    "Ambito": "AIzaSyA94wVtNNUXw6JM7oje8yGtYZtZwIJPu-4",
+    "Olé": os.getenv("API_KEY_OLE"),
+    "Clarín": os.getenv("API_KEY_CLARIN"),
+    "iProfesional": os.getenv("API_KEY_IPROFESIONAL"),
+    "Caras": os.getenv("API_KEY_CARAS"),
+    "Ambito": os.getenv("API_KEY_AMBITO")
 }
 
 FUENTES = {
@@ -28,6 +30,7 @@ FUENTES = {
     "Caras": "https://caras.perfil.com/feed",
     "Ambito": "https://www.ambito.com/rss/pages/home.xml",
 }
+
 
 NOMBRE_PLANILLA = "Base_Noticias"
 ARCHIVO_JSON = "creds.json" 
