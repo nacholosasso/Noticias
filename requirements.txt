@@ -1,8 +1,0 @@
-streamlit
-pandas
-gspread
-oauth2client
-feedparser
-google-generativeai
-beautifulsoup4
-requests
