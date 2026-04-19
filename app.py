@@ -4,9 +4,9 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 # 1. Configuración visual de la web
-st.set_page_config(page_title="Vigilante de Noticias IA", layout="wide", page_icon="🗞️")
+st.set_page_config(page_title="Noticias de Diarios con IA", layout="wide", page_icon="🗞️")
 
-st.title("🗞️ Vigilante de Noticias - CABA")
+st.title("🗞️ Noticias de Diarios con IA")
 st.markdown("---")
 
 # 2. Función para leer los datos de Google Sheets
