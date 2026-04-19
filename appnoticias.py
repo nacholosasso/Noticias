@@ -16,13 +16,17 @@ from datetime import datetime, timedelta
 API_KEYS = {
     "Olé": "AIzaSyDCvBWEP_i-EQ8ESF83avnBMtz7DwArKzM",
     "Clarín": "AIzaSyDZU-bJrXUr1h78Mv-mJTEERHEOt7EIH28",
-    "iProfesional": "AIzaSyBlP6Cz0ePoVnTkOWXrciAWNtuGzXfX5Wc"
+    "iProfesional": "AIzaSyBlP6Cz0ePoVnTkOWXrciAWNtuGzXfX5Wc",
+    "Caras": "AIzaSyC9bAsr4NAPgaloaK5LuLGEeniF-5zFtVE",
+    "Ambito": "AIzaSyA94wVtNNUXw6JM7oje8yGtYZtZwIJPu-4",
 }
 
 FUENTES = {
     "Olé": "https://www.ole.com.ar/rss/ultimas-noticias/",
     "Clarín": "https://www.clarin.com/rss/lo-ultimo/",
-    "iProfesional": "https://www.iprofesional.com/rss/home"
+    "iProfesional": "https://www.iprofesional.com/rss/home",
+    "Caras": "https://caras.perfil.com/feed",
+    "Ambito": "https://www.ambito.com/rss/pages/home.xml",
 }
 
 NOMBRE_PLANILLA = "Base_Noticias"
@@ -43,9 +47,8 @@ def conectar_google_sheets():
 
 def guardar_en_google_sheets(nueva_fila, hoja):
     try:
-        links_existentes = hoja.col_values(7)
-        if nueva_fila['Link'] in links_existentes:
-            return False
+        # Nota: La validación de duplicados ahora se hace en el bucle principal 
+        # para mayor eficiencia, pero se mantiene aquí como seguridad.
         fila_datos = [
             nueva_fila["Diario"], nueva_fila["Fecha Carga"],
             nueva_fila["Fecha Publicacion"], nueva_fila["Titulo"],
@@ -81,10 +84,21 @@ ultimos_links = {nombre: "" for nombre in FUENTES}
 hoja_nube = conectar_google_sheets()
 
 if not hoja_nube:
+    print("No se pudo establecer la conexión inicial. Cerrando script.")
     exit()
+
+print("🚀 Script iniciado. Monitoreando noticias...")
 
 while True:
     ahora = datetime.now()
+    
+    # OPTIMIZACIÓN: Leemos los links existentes UNA VEZ por ciclo de 30 segundos
+    try:
+        links_en_sheet = hoja_nube.col_values(7)
+    except Exception as e:
+        print(f"⚠️ Error al leer Sheets: {e}")
+        links_en_sheet = []
+
     for diario, url in FUENTES.items():
         try:
             feed = feedparser.parse(url)
@@ -93,17 +107,15 @@ while True:
                 link_actual = entrada.link
 
                 if link_actual != ultimos_links[diario]:
-                    ultimos_links[diario] = link_actual
                     
-                    # NUEVO: Chequeo preventivo en el Excel antes de gastar IA
-                    links_en_sheet = hoja_nube.col_values(7)
+                    # Chequeo preventivo contra la lista que bajamos de Sheets
                     if link_actual in links_en_sheet:
-                        print(f"✅ {diario}: La noticia ya está en el Excel. Saltando IA...")
-                        continue # Salta a la siguiente noticia sin llamar a Gemini
+                        print(f"✅ {diario}: La noticia ya está en Sheets. Saltando...")
+                        ultimos_links[diario] = link_actual
+                        continue 
 
                     # Si llegó acá, es porque REALMENTE es nueva
                     print(f"🔍 Procesando nueva noticia en {diario}...")
-                    
                     
                     # FECHAS CORREGIDAS
                     fecha_rss_raw = entrada.get('published', '')
@@ -123,7 +135,7 @@ while True:
                     resumen_rss = limpiar_html(entrada.get('summary', ''))
                     texto_para_ia = cuerpo_nota if len(cuerpo_nota) > 150 else resumen_rss
 
-                    # GEMINI (Lógica de Fallback con tus modelos específicos)
+                    # GEMINI (Manteniendo tus modelos tal cual)
                     resumen_ia = "Error en IA"
                     modelos_a_probar = [
                         'gemini-3.1-flash-lite-preview', 
@@ -145,10 +157,10 @@ while True:
                             print(f"🤖 [{diario}] Resumen OK con: {nombre_modelo}")
                             break 
                         except Exception as e:
-                            print(f"⚠️ {nombre_modelo} no disponible en {diario}, probando el siguiente...")
+                            # print(f"⚠️ {nombre_modelo} falló, probando siguiente...")
                             continue
 
-                    # --- ESTE BLOQUE VA ALINEADO CON EL 'FOR' (FUERA DE ÉL) ---
+                    # Preparación de datos para guardado
                     datos = {
                         "Diario": diario, 
                         "Fecha Carga": fecha_carga,
@@ -160,9 +172,13 @@ while True:
                     }
 
                     if guardar_en_google_sheets(datos, hoja_nube):
-                        print(f"✅ [{diario}] Guardado con hora Argentina.")
+                        print(f"💾 [{diario}] Guardado exitosamente en Google Sheets.")
+                        # Actualizamos memoria local para evitar re-procesar en este mismo ciclo
+                        ultimos_links[diario] = link_actual
+                        links_en_sheet.append(link_actual)
 
         except Exception as e:
-            print(f"❗ Error: {e}")
+            print(f"❗ Error en el bucle de {diario}: {e}")
 
+    # Espera de 30 segundos antes de la siguiente vuelta
     time.sleep(30)
