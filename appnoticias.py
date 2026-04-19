@@ -114,19 +114,40 @@ while True:
                     resumen_rss = limpiar_html(entrada.get('summary', ''))
                     texto_para_ia = cuerpo_nota if len(cuerpo_nota) > 150 else resumen_rss
 
-                    # GEMINI
-                    try:
-                        genai.configure(api_key=API_KEYS.get(diario))
-                        model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
-                        prompt = (f"Sos un periodista. Resumí en 3 oraciones directamente y sin comentarios como aquí esta el resumen.\n\nTÍTULO: {entrada.title}\nCUERPO: {texto_para_ia}")
-                        resumen_ia = model.generate_content(prompt).text.strip()
-                    except:
-                        resumen_ia = "Error en IA"
+                    # GEMINI (Lógica de Fallback con tus modelos específicos)
+                    resumen_ia = "Error en IA"
+                    modelos_a_probar = [
+                        'gemini-3.1-flash-lite-preview', 
+                        'gemini-3-flash-preview', 
+                        'gemini-2.5-flash-lite', 
+                        'gemini-2.5-flash'
+                    ]
+                    
+                    for nombre_modelo in modelos_a_probar:
+                        try:
+                            genai.configure(api_key=API_KEYS.get(diario))
+                            model = genai.GenerativeModel(nombre_modelo)
+                            prompt = (f"Sos un periodista. Resumí en 3 oraciones directamente y sin comentarios.\n\n"
+                                      f"TÍTULO: {entrada.title}\nCUERPO: {texto_para_ia}")
+                            
+                            respuesta = model.generate_content(prompt)
+                            resumen_ia = respuesta.text.strip()
+                            
+                            print(f"🤖 [{diario}] Resumen OK con: {nombre_modelo}")
+                            break 
+                        except Exception as e:
+                            print(f"⚠️ {nombre_modelo} no disponible en {diario}, probando el siguiente...")
+                            continue
 
+                    # --- ESTE BLOQUE VA ALINEADO CON EL 'FOR' (FUERA DE ÉL) ---
                     datos = {
-                        "Diario": diario, "Fecha Carga": fecha_carga,
-                        "Fecha Publicacion": fecha_publicacion, "Titulo": entrada.title,
-                        "Resumen IA": resumen_ia, "Resumen Web": resumen_rss, "Link": link_actual
+                        "Diario": diario, 
+                        "Fecha Carga": fecha_carga,
+                        "Fecha Publicacion": fecha_publicacion, 
+                        "Titulo": entrada.title,
+                        "Resumen IA": resumen_ia, 
+                        "Resumen Web": resumen_rss, 
+                        "Link": link_actual
                     }
 
                     if guardar_en_google_sheets(datos, hoja_nube):
