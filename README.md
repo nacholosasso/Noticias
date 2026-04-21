@@ -3,6 +3,10 @@ python appnoticias.py
 Ver las noticias en el navegador (opcional):
 streamlit run app.py
 
+En el trabajo
+$py = "C:\Users\ilosasso\Desktop\Programacion\WPy64-31241\python-3.12.4.amd64\python.exe"
+& $py appnoticias.py
+
 
 # 🗞️ Noticiero Automático con Inteligencia Artificial
 

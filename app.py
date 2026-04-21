@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+# import gspread
+# from oauth2client.service_account import ServiceAccountCredentials
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # 1. Configuración visual de la web
 st.set_page_config(page_title="Noticias de Diarios con IA", layout="wide", page_icon="🗞️")
@@ -9,13 +11,16 @@ st.set_page_config(page_title="Noticias de Diarios con IA", layout="wide", page_
 st.title("🗞️ Noticias de Diarios con IA")
 st.markdown("---")
 
-# 2. Función para leer los datos de Google Sheets
+# 2. Función para leer los datos de Firestore
 def cargar_datos():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name('creds.json', scope)
-    client = gspread.authorize(creds)
-    sheet = client.open("Base_Noticias").sheet1 
-    data = sheet.get_all_records()
+    # Verificamos si la app ya fue inicializada para evitar errores en Streamlit
+    if not firebase_admin._apps:
+        cred = credentials.Certificate('firebase-creds.json')
+        firebase_admin.initialize_app(cred)
+    
+    db = firestore.client()
+    docs = db.collection('articulos').stream()
+    data = [doc.to_dict() for doc in docs]
     return pd.DataFrame(data)
 
 try:

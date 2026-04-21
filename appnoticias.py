@@ -1,26 +1,30 @@
 import time
 import feedparser
-import google.generativeai as genai
+from google import genai
 import pandas as pd
 import os
 import re
 import requests
-import gspread
+# import gspread
 from bs4 import BeautifulSoup
-from oauth2client.service_account import ServiceAccountCredentials
+# from oauth2client.service_account import ServiceAccountCredentials
+import firebase_admin
+from firebase_admin import credentials, firestore
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
+# Cargar variables de entorno
+load_dotenv()
+
 # ==========================================
-# CONFIGURACIÓN
+# CONFIGURACIÓN (CORREGIDA)
 # ==========================================
-load_dotenv()  # <--- AGREGÁ ESTA LÍNEA AQUÍ
 API_KEYS = {
-    "Olé": os.getenv("API_KEY_OLE"),
-    "Clarín": os.getenv("API_KEY_CLARIN"),
-    "iProfesional": os.getenv("API_KEY_IPROFESIONAL"),
-    "Caras": os.getenv("API_KEY_CARAS"),
-    "Ambito": os.getenv("API_KEY_AMBITO")
+    "Olé": os.getenv("OLE_API_KEY"),
+    "Clarín": os.getenv("CLARIN_API_KEY"),
+    "iProfesional": os.getenv("IPROFESIONAL_API_KEY"),
+    "Caras": os.getenv("CARAS_API_KEY"),
+    "Ambito": os.getenv("AMBITO_API_KEY")
 }
 
 FUENTES = {
@@ -32,36 +36,27 @@ FUENTES = {
 }
 
 
-NOMBRE_PLANILLA = "Base_Noticias"
-ARCHIVO_JSON = "creds.json" 
+FIREBASE_CREDS = "firebase-creds.json"
 
 # ==========================================
 # FUNCIONES
 # ==========================================
-def conectar_google_sheets():
+def conectar_firestore():
     try:
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name(ARCHIVO_JSON, scope)
-        client = gspread.authorize(creds)
-        return client.open(NOMBRE_PLANILLA).sheet1
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(FIREBASE_CREDS)
+            firebase_admin.initialize_app(cred)
+        return firestore.client()
     except Exception as e:
-        print(f"❌ Error al conectar con Google Sheets: {e}")
+        print(f"❌ Error al conectar con Firestore: {e}")
         return None
 
-def guardar_en_google_sheets(nueva_fila, hoja):
+def guardar_en_firestore(nueva_fila, db):
     try:
-        # Nota: La validación de duplicados ahora se hace en el bucle principal 
-        # para mayor eficiencia, pero se mantiene aquí como seguridad.
-        fila_datos = [
-            nueva_fila["Diario"], nueva_fila["Fecha Carga"],
-            nueva_fila["Fecha Publicacion"], nueva_fila["Titulo"],
-            nueva_fila["Resumen IA"], nueva_fila["Resumen Web"],
-            nueva_fila["Link"]
-        ]
-        hoja.insert_row(fila_datos, 2)
+        db.collection('articulos').add(nueva_fila)
         return True
     except Exception as e:
-        print(f"⚠️ Error al insertar fila: {e}")
+        print(f"⚠️ Error al insertar documento en Firestore: {e}")
         return False
 
 def limpiar_html(texto):
@@ -84,9 +79,9 @@ def extraer_cuerpo_noticia(url):
 # BUCLE PRINCIPAL
 # ==========================================
 ultimos_links = {nombre: "" for nombre in FUENTES}
-hoja_nube = conectar_google_sheets()
+db = conectar_firestore()
 
-if not hoja_nube:
+if not db:
     print("No se pudo establecer la conexión inicial. Cerrando script.")
     exit()
 
@@ -95,12 +90,13 @@ print("🚀 Script iniciado. Monitoreando noticias...")
 while True:
     ahora = datetime.now()
     
-    # OPTIMIZACIÓN: Leemos los links existentes UNA VEZ por ciclo de 30 segundos
+    # OPTIMIZACIÓN: Leemos los links existentes en Firestore UNA VEZ por ciclo de 30 segundos
     try:
-        links_en_sheet = hoja_nube.col_values(7)
+        docs = db.collection('articulos').select(['Link']).stream()
+        links_en_db = [doc.to_dict().get('Link') for doc in docs if 'Link' in doc.to_dict()]
     except Exception as e:
-        print(f"⚠️ Error al leer Sheets: {e}")
-        links_en_sheet = []
+        print(f"⚠️ Error al leer Firestore: {e}")
+        links_en_db = []
 
     for diario, url in FUENTES.items():
         try:
@@ -111,9 +107,9 @@ while True:
 
                 if link_actual != ultimos_links[diario]:
                     
-                    # Chequeo preventivo contra la lista que bajamos de Sheets
-                    if link_actual in links_en_sheet:
-                        print(f"✅ {diario}: La noticia ya está en Sheets. Saltando...")
+                    # Chequeo preventivo contra la lista que bajamos de Firestore
+                    if link_actual in links_en_db:
+                        print(f"✅ {diario}: La noticia ya está en Firestore. Saltando...")
                         ultimos_links[diario] = link_actual
                         continue 
 
@@ -138,7 +134,7 @@ while True:
                     resumen_rss = limpiar_html(entrada.get('summary', ''))
                     texto_para_ia = cuerpo_nota if len(cuerpo_nota) > 150 else resumen_rss
 
-                    # GEMINI (Manteniendo tus modelos tal cual)
+                    # GEMINI (Actualizado a nueva API)
                     resumen_ia = "Error en IA"
                     modelos_a_probar = [
                         'gemini-3.1-flash-lite-preview', 
@@ -147,20 +143,21 @@ while True:
                         'gemini-2.5-flash'
                     ]
                     
+                    prompt = f"Sos un periodista. Resumí en maximo 4 oraciones directamente y sin comentarios.:\n\n{texto_para_ia}"
+                    
                     for nombre_modelo in modelos_a_probar:
                         try:
-                            genai.configure(api_key=API_KEYS.get(diario))
-                            model = genai.GenerativeModel(nombre_modelo)
-                            prompt = (f"Sos un periodista. Resumí en 3 oraciones directamente y sin comentarios.\n\n"
-                                      f"TÍTULO: {entrada.title}\nCUERPO: {texto_para_ia}")
-                            
-                            respuesta = model.generate_content(prompt)
-                            resumen_ia = respuesta.text.strip()
+                            client = genai.Client(api_key=API_KEYS.get(diario))
+                            response = client.models.generate_content(
+                                model=nombre_modelo,
+                                contents=prompt
+                            )
+                            resumen_ia = response.text.strip()
                             
                             print(f"🤖 [{diario}] Resumen OK con: {nombre_modelo}")
                             break 
                         except Exception as e:
-                            # print(f"⚠️ {nombre_modelo} falló, probando siguiente...")
+                            print(f"❌ Error real detectado: {e}")
                             continue
 
                     # Preparación de datos para guardado
@@ -174,11 +171,11 @@ while True:
                         "Link": link_actual
                     }
 
-                    if guardar_en_google_sheets(datos, hoja_nube):
-                        print(f"💾 [{diario}] Guardado exitosamente en Google Sheets.")
+                    if guardar_en_firestore(datos, db):
+                        print(f"💾 [{diario}] Guardado exitosamente en Firestore.")
                         # Actualizamos memoria local para evitar re-procesar en este mismo ciclo
                         ultimos_links[diario] = link_actual
-                        links_en_sheet.append(link_actual)
+                        links_en_db.append(link_actual)
 
         except Exception as e:
             print(f"❗ Error en el bucle de {diario}: {e}")
