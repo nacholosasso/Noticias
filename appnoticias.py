@@ -1,4 +1,3 @@
-import time
 import feedparser
 from google import genai
 import pandas as pd
@@ -10,7 +9,7 @@ from bs4 import BeautifulSoup
 # from oauth2client.service_account import ServiceAccountCredentials
 import firebase_admin
 from firebase_admin import credentials, firestore
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
@@ -87,10 +86,15 @@ if not db:
 
 print("🚀 Script iniciado. Monitoreando noticias...")
 
-while True:
-    ahora = datetime.now()
+def ejecutar_recoleccion():
+    # --- CORRECCIÓN HORA ARGENTINA ---
+    # Definimos explícitamente UTC-3
+    argentina_tz = timezone(timedelta(hours=-3))
+    ahora_dt = datetime.now(argentina_tz)
+    fecha_carga = ahora_dt.strftime("%d/%m/%Y %H:%M:%S")
+    # ---------------------------------
     
-    # OPTIMIZACIÓN: Leemos los links existentes en Firestore UNA VEZ por ciclo de 30 segundos
+    # OPTIMIZACIÓN: Leemos los links existentes en Firestore
     try:
         docs = db.collection('articulos').select(['Link']).stream()
         links_en_db = [doc.to_dict().get('Link') for doc in docs if 'Link' in doc.to_dict()]
@@ -116,25 +120,24 @@ while True:
                     # Si llegó acá, es porque REALMENTE es nueva
                     print(f"🔍 Procesando nueva noticia en {diario}...")
                     
-                    # FECHAS CORREGIDAS
+                    # FECHAS PUBLICACION CORREGIDAS
                     fecha_rss_raw = entrada.get('published', '')
                     if fecha_rss_raw:
                         try:
                             fecha_dt = datetime(*(entrada.published_parsed[:6]))
-                            fecha_dt = fecha_dt - timedelta(hours=3) # AJUSTE ARGENTINA
+                            # También ajustamos la fecha de publicación del diario a UTC-3
+                            fecha_dt = fecha_dt - timedelta(hours=3) 
                             fecha_publicacion = fecha_dt.strftime("%d/%m/%Y %H:%M:%S")
                         except:
                             fecha_publicacion = fecha_rss_raw 
                     else:
-                        fecha_publicacion = ahora.strftime("%d/%m/%Y %H:%M:%S")
+                        fecha_publicacion = fecha_carga
 
-                    fecha_carga = ahora.strftime("%d/%m/%Y %H:%M:%S")
-                    
                     cuerpo_nota = extraer_cuerpo_noticia(link_actual)
                     resumen_rss = limpiar_html(entrada.get('summary', ''))
                     texto_para_ia = cuerpo_nota if len(cuerpo_nota) > 150 else resumen_rss
 
-                    # GEMINI (Actualizado a nueva API)
+                    # GEMINI (Mantengo tus modelos tal cual)
                     resumen_ia = "Error en IA"
                     modelos_a_probar = [
                         'gemini-3.1-flash-lite-preview', 
@@ -173,12 +176,13 @@ while True:
 
                     if guardar_en_firestore(datos, db):
                         print(f"💾 [{diario}] Guardado exitosamente en Firestore.")
-                        # Actualizamos memoria local para evitar re-procesar en este mismo ciclo
+                        # Actualizamos memoria local para evitar re-procesar
                         ultimos_links[diario] = link_actual
                         links_en_db.append(link_actual)
 
         except Exception as e:
             print(f"❗ Error en el bucle de {diario}: {e}")
 
-    # Espera de 30 segundos antes de la siguiente vuelta
-    time.sleep(30)
+if __name__ == "__main__":
+    ejecutar_recoleccion()
+    print("✅ Ciclo finalizado.")
