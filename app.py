@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 # import gspread
 # from oauth2client.service_account import ServiceAccountCredentials
+import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 
@@ -15,7 +16,9 @@ st.markdown("---")
 def cargar_datos():
     # Verificamos si la app ya fue inicializada para evitar errores en Streamlit
     if not firebase_admin._apps:
-        cred = credentials.Certificate('firebase-creds.json')
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cred_path = os.path.join(base_dir, 'firebase-creds.json')
+        cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
     
     db = firestore.client()
