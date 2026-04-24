@@ -3,7 +3,7 @@
 Este proyecto es un pipeline automatizado de noticias que recolecta artículos de los principales medios de Argentina (Olé, Clarín, Caras, Ámbito), procesa su contenido y genera resúmenes inteligentes utilizando los últimos modelos de **Google Gemini**.
 
 ## 🌐 Demo en Vivo
-Puedes ver el portal funcionando aquí: [🔗 https://portal-noticias-ia-9c7c9.web.app/](#)
+Puedes ver el portal funcionando aquí: [🔗 https://portal-noticias-ia-9c7c9.web.app/](https://portal-noticias-ia-9c7c9.web.app/)
 
 > **Nota:** El backend procesa las noticias cada X tiempo y el frontend consume los datos en tiempo real desde Firestore.
 
