@@ -17,7 +17,7 @@
             --border-color: rgba(255, 255, 255, 0.08);
             
             --brand-ole: #4ade80;
-            --brand-clarin: #f87171;
+            --brand-perfil: #cbd5e1;
             --brand-ambito: #f97316;
             --brand-caras: #ec4899;
         }
@@ -103,7 +103,7 @@
         .badge { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 12px; border-radius: 8px; }
 
         .card.ole .badge { color: var(--brand-ole); background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); }
-        .card.clarin .badge { color: var(--brand-clarin); background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.2); }
+        .card.perfil .badge { color: var(--brand-perfil); background: rgba(203, 213, 225, 0.1); border: 1px solid rgba(203, 213, 225, 0.2); }
         .card.ambito .badge { color: var(--brand-ambito); background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); }
         .card.caras .badge { color: var(--brand-caras); background: rgba(236, 72, 153, 0.1); border: 1px solid rgba(236, 72, 153, 0.2); }
 
@@ -151,7 +151,7 @@
                 <select id="filter-diario" onchange="filtrarNoticias()">
                     <option value="todos">Todos los medios</option>
                     <option value="Olé">Olé</option>
-                    <option value="Clarín">Clarín</option>
+                    <option value="Perfil">Perfil</option>
                     <option value="Ambito">Ámbito</option>
                     <option value="Caras">Caras</option>
                 </select>
@@ -216,7 +216,7 @@
             if (!diario) return '';
             const d = diario.toLowerCase();
             if (d.includes('olé')) return 'ole';
-            if (d.includes('clarín')) return 'clarin';
+            if (d.includes('perfil')) return 'perfil';
             if (d.includes('ambito')) return 'ambito';
             if (d.includes('caras')) return 'caras';
             return '';

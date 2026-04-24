@@ -19,14 +19,14 @@ load_dotenv()
 # ==========================================
 API_KEYS = {
     "Olé": os.getenv("OLE_API_KEY"),
-    "Clarín": os.getenv("CLARIN_API_KEY"),
+    "Perfil": os.getenv("PERFIL_API_KEY"),
     "Caras": os.getenv("CARAS_API_KEY"),
     "Ambito": os.getenv("AMBITO_API_KEY")
 }
 
 FUENTES = {
     "Olé": "https://www.ole.com.ar/rss/ultimas-noticias/",
-    "Clarín": "https://www.clarin.com/rss/lo-ultimo/",
+    "Perfil": "https://www.perfil.com/feed",
     "Caras": "https://caras.perfil.com/feed",
     "Ambito": "https://www.ambito.com/rss/pages/home.xml",
 }
