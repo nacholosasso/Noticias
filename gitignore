@@ -1,7 +1,0 @@
-# Credenciales y Secretos
-.env
-firebase-creds.json
-
-# Python
-__pycache__/
-*.py[cod]
