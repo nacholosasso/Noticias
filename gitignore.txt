@@ -1,0 +1,22 @@
+# Firebase Keys (SENSITIVE - DO NOT REMOVE)
+firebase-creds.json
+
+# API Keys / Secrets
+.env
+
+# Python environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Firebase Hosting logs and cache
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# OS specific files
+.DS_Store
+thumbs.db

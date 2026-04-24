@@ -1,62 +1,74 @@
-# 📰 Portal de Noticias con IA (Scraper + Gemini)
+# Portal de Noticias IA - Resumen y Categorización 🚀
 
-Este proyecto es un pipeline automatizado de noticias que recolecta artículos de los principales medios de Argentina (Olé, Perfil, Caras, Ámbito), procesa su contenido y genera resúmenes inteligentes utilizando los últimos modelos de **Google Gemini**.
+Este proyecto es una plataforma profesional de noticias automatizada que utiliza Inteligencia Artificial para recolectar, resumir y clasificar noticias de los principales medios de Argentina en tiempo real.
 
-## 🌐 Demo en Vivo
-Puedes ver el portal funcionando aquí: [🔗 https://portal-noticias-ia-9c7c9.web.app/](https://portal-noticias-ia-9c7c9.web.app/)
+## ✨ Características
 
-> **Nota:** El backend procesa las noticias cada X tiempo y el frontend consume los datos en tiempo real desde Firestore.
+- **Recolección Multi-fuente**: Extrae noticias automáticamente vía RSS de fuentes como Olé, Perfil, Ámbito y Caras.
+- **Resúmenes con Gemini AI**: Genera resúmenes ejecutivos de máximo 4 oraciones utilizando los últimos modelos de Google Gemini.
+- **Categorización Inteligente**: Clasifica automáticamente cada artículo en categorías como Política, Economía, Deportes, Tecnología, etc.
+- **Diseño Premium**: Interfaz moderna con estética "Glassmorphism", modo oscuro nativo, y diseño responsivo optimizado para móviles.
+- **Filtros Dinámicos**: Sistema de filtrado combinado por medio de comunicación y categoría temática.
+- **Gestión de Datos Eficiente**: Limpieza automática de noticias antiguas y almacenamiento persistente en Firestore.
 
-## 🚀 Funcionalidades
+## 🛠️ Stack Tecnológico
 
-*   **Scraping Multifuente:** Monitorea feeds RSS de diversos diarios en tiempo real.
-*   **Extracción de Contenido:** Utiliza `BeautifulSoup` para extraer el cuerpo de la noticia de forma limpia, omitiendo publicidad y elementos innecesarios.
-*   **Resúmenes con IA:** Procesa el texto mediante la API de Google GenAI para generar resúmenes concisos de máximo 4 oraciones.
-*   **Control de Rate Limiting:** Implementa un sistema de espera para respetar los límites de RPM (Requests Per Minute) de la API gratuita.
-*   **Persistencia en la Nube:** Almacena los resultados en **Firebase Firestore**, evitando duplicados mediante la verificación de enlaces.
+### Backend (Python)
+- **Google GenAI SDK**: Integración con Gemini 2.x y 3.x Flash.
+- **Feedparser**: Procesamiento de feeds RSS.
+- **BeautifulSoup4**: Scraping para extracción de texto completo de noticias.
+- **Firebase Admin SDK**: Comunicación con Firestore.
+- **Google Cloud Run**: Hosting del backend escalable.
 
-## 🛠️ Tecnologías utilizadas
+### Frontend (Web)
+- **HTML5 / CSS3**: Diseño a medida con variables CSS y animaciones fluidas.
+- **JavaScript (Vanilla)**: Lógica de filtrado y consumo de datos en tiempo real.
+- **Firebase SDK**: Conexión directa con la base de datos desde el cliente.
+- **Firebase Hosting**: Despliegue de la aplicación web.
 
-*   **Lenguaje:** Python 3.x
-*   **IA:** Google Gemini API (GenAI)
-*   **Base de Datos:** Firebase Firestore (NoSQL)
-*   **Librerías Key:** `feedparser`, `BeautifulSoup4`, `google-genai`, `requests`.
-*   **Frontend:** HTML5, CSS3 (Tailwind/Bootstrap), JavaScript (Vanilla/Firebase SDK).
+## ⚙️ Configuración del Entorno
+
+### Requisitos Previos
+1. Una cuenta en [Google Cloud Console](https://console.cloud.google.com/).
+2. Un proyecto de Firebase con Firestore habilitado.
+3. API Keys de Google Gemini.
+
+### Variables de Entorno
+El backend requiere las siguientes claves para funcionar:
+- `OLE_API_KEY`
+- `PERFIL_API_KEY`
+- `CARAS_API_KEY`
+- `AMBITO_API_KEY`
+
+## 🚀 Despliegue
+
+### 1. Backend (Google Cloud Run)
+Para desplegar o actualizar el servicio de procesamiento:
+
+```bash
+gcloud run deploy noticias-backend \
+  --project=portal-noticias-ia \
+  --source . \
+  --region southamerica-east1 \
+  --allow-unauthenticated \
+  --timeout 540 \
+  --memory 512Mi \
+  --set-env-vars OLE_API_KEY="TU_KEY",PERFIL_API_KEY="TU_KEY",...
+```
+
+### 2. Frontend (Firebase Hosting)
+Para subir los cambios visuales y la lógica del cliente:
+
+```bash
+firebase deploy
+```
 
 ## 📂 Estructura del Proyecto
 
-*   `/`: Contiene el `backend.py` y archivos de configuración.
-*   `/frontend`: (Opcional) Si separaste los archivos web en una carpeta, menciónalo aquí.
-    *   `index.html`: Estructura principal del portal.
-    *   `app.js`: Lógica para leer datos de Firebase y mostrarlos.
-    *   `styles.css`: Diseño y estilos responsivos.
-
-## 📋 Configuración
-
-Para replicar este proyecto, necesitarás:
-
-1.  **API Keys de Gemini:** Obtén tus llaves en Google AI Studio.
-2.  **Firebase:** Crea un proyecto en la consola de Firebase, activa Firestore y descarga el archivo `firebase-creds.json`.
-3.  **Variables de Entorno:** Crea un archivo `.env` con el siguiente formato:
-    ```env
-    OLE_API_KEY=tu_key_aqui
-    PERFIL_API_KEY=tu_key_aqui
-    CARAS_API_KEY=tu_key_aqui
-    AMBITO_API_KEY=tu_key_aqui
-    ```
-
-## 💻 Instalación
-
-```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/portal-noticias-ia.git
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Ejecutar el script
-python backend.py
-```
+- `backend.py`: Script principal que realiza el scraping, llama a la IA y guarda en Firestore.
+- `public/index.html`: SPA (Single Page Application) con el diseño y lógica de visualización.
+- `firebase-creds.json`: (No incluido por seguridad) Credenciales de cuenta de servicio para acceso a DB.
+- `requirements.txt`: Dependencias de Python necesarias.
 
 ---
-*Proyecto desarrollado como muestra de integración de IA Generativa y Web Scraping.*
+*Desarrollado con ❤️ integrando Python y Google Gemini AI.*

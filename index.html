@@ -14,6 +14,7 @@
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
             --accent: #38bdf8;
+            --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
             --border-color: rgba(255, 255, 255, 0.08);
             
             --brand-ole: #4ade80;
@@ -45,11 +46,12 @@
             display: flex; justify-content: space-between; align-items: center;
         }
 
-        .logo-container { display: flex; align-items: center; gap: 10px; }
-        .logo-dot { width: 10px; height: 10px; background: linear-gradient(135deg, var(--accent), #818cf8); border-radius: 50%; box-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
+        .logo-container { display: flex; align-items: center; gap: 12px; }
+        .logo-dot { width: 12px; height: 12px; background: var(--accent-gradient); border-radius: 50%; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
         h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: white; letter-spacing: -0.5px; }
 
-        .filter-wrapper { position: relative; }
+        .filters { display: flex; gap: 1rem; }
+        .filter-wrapper { position: relative; min-width: 160px; }
         select {
             appearance: none;
             background: rgba(255, 255, 255, 0.03);
@@ -99,8 +101,11 @@
             border-color: rgba(56, 189, 248, 0.3); 
         }
 
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .badge { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 12px; border-radius: 8px; }
+        .card-header { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+        .badges-row { display: flex; justify-content: space-between; align-items: center; }
+        .badge-group { display: flex; gap: 8px; }
+        .badge { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 6px; }
+        .badge.category { background: rgba(56, 189, 248, 0.1); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.2); }
 
         .card.ole .badge { color: var(--brand-ole); background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); }
         .card.perfil .badge { color: var(--brand-perfil); background: rgba(203, 213, 225, 0.1); border: 1px solid rgba(203, 213, 225, 0.2); }
@@ -147,14 +152,27 @@
                 <h1>Resumen Noticias IA</h1>
             </div>
             
-            <div class="filter-wrapper">
-                <select id="filter-diario" onchange="filtrarNoticias()">
-                    <option value="todos">Todos los medios</option>
-                    <option value="Olé">Olé</option>
-                    <option value="Perfil">Perfil</option>
-                    <option value="Ambito">Ámbito</option>
-                    <option value="Caras">Caras</option>
-                </select>
+            <div class="filters">
+                <div class="filter-wrapper">
+                    <select id="filter-categoria" onchange="filtrarNoticias()">
+                        <option value="todos">Todas las categorías</option>
+                        <option value="Política">Política</option>
+                        <option value="Economía">Economía</option>
+                        <option value="Deportes">Deportes</option>
+                        <option value="Espectáculos">Espectáculos</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Sociedad">Sociedad</option>
+                    </select>
+                </div>
+                <div class="filter-wrapper">
+                    <select id="filter-diario" onchange="filtrarNoticias()">
+                        <option value="todos">Todos los medios</option>
+                        <option value="Olé">Olé</option>
+                        <option value="Perfil">Perfil</option>
+                        <option value="Ambito">Ámbito</option>
+                        <option value="Caras">Caras</option>
+                    </select>
+                </div>
             </div>
         </div>
     </header>
@@ -258,8 +276,13 @@
 
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="badge">${data.Diario || 'Noticia'}</span>
-                        <span class="time-ago">🕒 ${timeAgo(fechaPub || fechaCarga)}</span>
+                        <div class="badges-row">
+                            <div class="badge-group">
+                                <span class="badge diario">${data.Diario || 'Noticia'}</span>
+                                ${data.Categoria ? `<span class="badge category">${data.Categoria}</span>` : ''}
+                            </div>
+                            <span class="time-ago">${timeAgo(fechaPub || fechaCarga)}</span>
+                        </div>
                     </div>
                     <h2>${data.Titulo || 'Sin título'}</h2>
                     <div class="ai-summary"><p>${data.Resumen_IA || 'Procesando...'}</p></div>
@@ -274,8 +297,14 @@
         }
 
         function filtrarNoticias() {
-            const filtro = document.getElementById('filter-diario').value;
-            renderizarNoticias(filtro === 'todos' ? todasLasNoticias : todasLasNoticias.filter(n => n.Diario === filtro));
+            const diario = document.getElementById('filter-diario').value;
+            const categoria = document.getElementById('filter-categoria').value;
+            
+            let filtradas = todasLasNoticias;
+            if (diario !== 'todos') filtradas = filtradas.filter(n => n.Diario === diario);
+            if (categoria !== 'todos') filtradas = filtradas.filter(n => n.Categoria === categoria);
+            
+            renderizarNoticias(filtradas);
         }
 
         cargarNoticias();
