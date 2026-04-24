@@ -1,6 +1,6 @@
 # 📰 Portal de Noticias con IA (Scraper + Gemini)
 
-Este proyecto es un pipeline automatizado de noticias que recolecta artículos de los principales medios de Argentina (Olé, Clarín, Caras, Ámbito), procesa su contenido y genera resúmenes inteligentes utilizando los últimos modelos de **Google Gemini**.
+Este proyecto es un pipeline automatizado de noticias que recolecta artículos de los principales medios de Argentina (Olé, Perfil, Caras, Ámbito), procesa su contenido y genera resúmenes inteligentes utilizando los últimos modelos de **Google Gemini**.
 
 ## 🌐 Demo en Vivo
 Puedes ver el portal funcionando aquí: [🔗 https://portal-noticias-ia-9c7c9.web.app/](https://portal-noticias-ia-9c7c9.web.app/)
@@ -40,7 +40,7 @@ Para replicar este proyecto, necesitarás:
 3.  **Variables de Entorno:** Crea un archivo `.env` con el siguiente formato:
     ```env
     OLE_API_KEY=tu_key_aqui
-    CLARIN_API_KEY=tu_key_aqui
+    PERFIL_API_KEY=tu_key_aqui
     CARAS_API_KEY=tu_key_aqui
     AMBITO_API_KEY=tu_key_aqui
     ```
